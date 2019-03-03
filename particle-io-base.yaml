@@ -1,0 +1,34 @@
+pool:
+  vmImage: Hosted macOS
+  demands: npm
+
+#Your build pipeline references a secret variable named ‘Particle.password’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab, and then select the option to make it secret. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references the ‘Particle.DeviceType’ variable, which you’ve selected to be settable at queue time. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab, and then select the option to make it settable at queue time. See https://go.microsoft.com/fwlink/?linkid=865971
+variables:
+  Particle.Username: '<your value here such as username@email.com>'
+
+steps:
+- task: Npm@1
+  displayName: 'npm install -g particle-cli'
+  inputs:
+    command: custom
+    verbose: false
+    customCommand: 'i -g particle-cli'
+
+- bash: |
+   # Write your commands here
+   particle login --username $(Particle.Username) --password $(Particle.password)
+   # Use the environment variables input below to pass secret variables to this script
+  displayName: Login
+
+- bash: |
+   # Write your commands here
+   particle compile $(Particle.DeviceType) $(Build.Repository.LocalPath)/firmware.ino --saveTo $(Build.StagingDirectory)/firmware.bin
+   # Use the environment variables input below to pass secret variables to this script
+  displayName: Compile
+
+- bash: |
+   # Write your commands here
+   particle flash studio_plant $(Build.StagingDirectory)/firmware.bin
+   # Use the environment variables input below to pass secret variables to this script
+  displayName: Flash
